@@ -27,6 +27,7 @@ package org.ow2.proactive_grid_cloud_portal.scheduler.client.view;
 
 import java.util.List;
 
+import org.ow2.proactive_grid_cloud_portal.common.client.model.LogModel;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerController;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.ExecutionDisplayModeListener;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.TaskSelectedListener;
@@ -80,7 +81,7 @@ public class TaskInfoView extends InfoView<Task>
     public void tasksUpdated(List<Task> tasks, long totalTasks) {
         if (this.displayedItem == null)
             return;
-
+        LogModel.getInstance().logImportantMessage("tasksUpdated not returned");
         for (Task t : tasks) {
             if (t.getId().equals(this.displayedItem.getId())) {
                 taskSelected(t);

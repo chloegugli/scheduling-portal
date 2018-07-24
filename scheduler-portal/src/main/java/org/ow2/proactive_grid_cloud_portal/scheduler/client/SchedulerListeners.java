@@ -225,15 +225,14 @@ public class SchedulerListeners {
          * The image used for job visualization has been updated
          * 
          * @param jobId id of the job
-         * @param path Relative path of the image on the server
          */
-        public void imageUpdated(String jobId, String path);
+        public void imageUpdated(String jobId);
 
         /**
          * The coordinate map for job visu has been updated
          * 
          * @param jobId id of the job
-         * @param map position and size of tasks on the image sent through {@link #imageUpdated(String, String)}
+         * @param map position and size of tasks on the image sent through {@link #imageUpdated(String)}
          */
         public void mapUpdated(String jobId, JobVisuMap map);
 

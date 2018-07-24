@@ -1104,6 +1104,7 @@ public class SchedulerServiceImpl extends Service implements SchedulerService {
      * org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerService#getJobImage(java.lang
      * .String, java.lang.String)
      */
+    //TODO: it seems like this call always returns 404
     @Override
     public String getJobImage(String sessionId, String jobId) throws RestServerException, ServiceException {
         String url = "img_" + jobId + ".png";

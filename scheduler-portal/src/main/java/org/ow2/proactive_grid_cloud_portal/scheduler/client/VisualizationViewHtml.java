@@ -28,6 +28,7 @@ package org.ow2.proactive_grid_cloud_portal.scheduler.client;
 import java.util.HashMap;
 import java.util.List;
 
+import org.ow2.proactive_grid_cloud_portal.common.client.model.LogModel;
 import org.ow2.proactive_grid_cloud_portal.scheduler.shared.JobVisuMap;
 
 import com.google.gwt.dom.client.Element;
@@ -58,15 +59,17 @@ public class VisualizationViewHtml implements VisualizationView {
 
     private Label noJobSelectedMessage;
 
-    public void imageUpdated(String jobId, String path) {
+    public void imageUpdated(String jobId) {
         hideHtml();
     }
 
     public void mapUpdated(String jobId, JobVisuMap map) {
         hideHtml();
+        LogModel.getInstance().logImportantMessage("in mapUpdated html");
     }
 
     public void onLoad(LoadEvent event) {
+        LogModel.getInstance().logImportantMessage("on load html");
     }
 
     public void jobSelected(Job job) {
@@ -127,7 +130,7 @@ public class VisualizationViewHtml implements VisualizationView {
                 Element elem = elements.getItem(i);
                 if (elem.getClassName().contains("task")) {
                     // task div - finding it's name
-                    String taskName = elem.getInnerText();
+                    String taskName = "--a--" + elem.getInnerText();
                     taskName = taskName.replaceAll("&nbsp", " ");
                     taskName = taskName.replaceAll(String.valueOf((char) 160), " ");
                     taskName = taskName.trim();

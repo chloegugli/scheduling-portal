@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.ow2.proactive_grid_cloud_portal.common.client.model.LogModel;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.model.JobsModel;
 import org.ow2.proactive_grid_cloud_portal.scheduler.shared.JobVisuMap;
 
@@ -72,14 +73,8 @@ public class VisualizationViewImage implements VisualizationView {
     /** displayed when no visu is available */
     private Label message = null;
 
-    /** image shown to the user */
-    private Img img;
-
     /** used to preload the image above */
     private Image imgLoader;
-
-    /** relative path fragment for the image url */
-    private String imgPath;
 
     /** contains the raphael overlay */
     private WidgetCanvas overPane;
@@ -103,10 +98,13 @@ public class VisualizationViewImage implements VisualizationView {
      *
      */
     private class Box {
+        private String name;
 
         private Rect failedRect;
 
         private Rect runningRect;
+
+        private Rect finishedRect;
 
         private Raphael.Image failedImg;
 
@@ -143,27 +141,32 @@ public class VisualizationViewImage implements VisualizationView {
         private int x, y, w, h;
 
         Box(String name) {
+            this.name = name;
             this.x = map.getTaskX(name) + xoff;
             this.y = map.getTaskY(name) + yoff;
             this.w = map.getTaskW(name);
-            this.h = bheight;
+            this.h = map.getTaskH(name);
 
             w -= 2;
             x += 1;
-
+            LogModel.getInstance()
+                    .logImportantMessage("in constr box " + this.x + "," + this.y + "," + this.w + "," + this.h);
             draw();
         }
 
         void draw() {
-            int bw = 40 + icow;
-            this.failedRect = overlay.new Rect(x + w - bw + 1 - icod, y, bw + 2, h, 5);
-            this.failedRect.attr("fill", "90-#f3decb-#eeeeee");
+            LogModel.getInstance().logImportantMessage("in draw");
+            this.failedRect = overlay.new Rect(x, y, w, h, 5);
             this.failedRect.attr("stroke", "#f49987");
             this.failedRect.hide();
 
-            this.runningRect = overlay.new Rect(x - 1, y + 24, w, 45, 5);
+            this.runningRect = overlay.new Rect(x, y, w, h, 5);
             this.runningRect.attr("stroke", "green");
             this.runningRect.hide();
+
+            this.finishedRect = overlay.new Rect(x, y, w, h, 5);
+            this.finishedRect.attr("stroke", "#808080");
+            this.finishedRect.hide();
 
             String runningImgUrl = SchedulerImages.instance.running_24().getSafeUri().asString();
             String finishedImgUrl = SchedulerImages.instance.finished_14().getSafeUri().asString();
@@ -178,7 +181,6 @@ public class VisualizationViewImage implements VisualizationView {
         }
 
         void setRunning(int r) {
-            String text = "" + r;
             if (this.running != null) {
                 try {
                     this.running.remove();
@@ -186,7 +188,7 @@ public class VisualizationViewImage implements VisualizationView {
                     this.running.hide();
                 }
             }
-            this.running = overlay.new Text(x + w - icow2 - 8, y + yRunningOff + toff + 4, text);
+            this.running = overlay.new Text(x + w / 2, y + h / 2, this.name);
             this.running.attr("font-weight", "bold");
             this.running.attr("font-size", "14");
             this.running.attr("text-anchor", "end");
@@ -203,7 +205,7 @@ public class VisualizationViewImage implements VisualizationView {
         }
 
         void setFinished(int f) {
-            String text = "" + f;
+            LogModel.getInstance().logImportantMessage("in setFinished " + f);
             if (this.finished != null) {
                 try {
                     this.finished.remove();
@@ -211,23 +213,23 @@ public class VisualizationViewImage implements VisualizationView {
                     this.finished.hide();
                 }
             }
-            this.finished = overlay.new Text(x + w - icow - 8 - icod, y + yFinishedOff + toff, text);
+            this.finished = overlay.new Text(x + w / 2, y + h / 2, this.name);
+            this.finished.attr("font-weight", "bold");
+            this.finished.attr("font-size", "14");
             this.finished.attr("text-anchor", "end");
 
             if (f == 0) {
                 this.finishedImg.hide();
                 this.finished.hide();
+                this.finishedRect.hide();
             } else {
                 this.finishedImg.show();
                 this.finished.show();
+                this.finishedRect.show();
             }
         }
 
         void setFailed(int f) {
-            String text = "" + f;
-            if (f == 1)
-                text = "";
-
             if (this.failed != null) {
                 try {
                     this.failed.remove();
@@ -235,28 +237,19 @@ public class VisualizationViewImage implements VisualizationView {
                     this.failed.hide();
                 }
             }
-            this.failed = overlay.new Text(x + w - icow - 8 - icod, y + yFailedOff + toff, text);
+            this.failed = overlay.new Text(x + w / 2, y + h / 2, this.name);
+            this.failed.attr("font-weight", "bold");
+            this.failed.attr("font-size", "14");
             this.failed.attr("text-anchor", "end");
 
-            if (f > 0) {
-                this.failedRect.show();
-                this.failedImg.show();
-
-                int tw = (int) failed.getBBox().width();
-                int bw = (tw + icow + 14);
-                if (f > 1) {
-                    this.failed.show();
-                } else {
-                    bw -= 5;
-                    this.failed.hide();
-                }
-
-                this.failedRect.attr("width", "" + bw);
-                this.failedRect.attr("x", "" + (x + w - bw - icod));
-            } else {
+            if (f == 0) {
+                this.failedImg.hide();
                 this.failed.hide();
                 this.failedRect.hide();
-                this.failedImg.hide();
+            } else {
+                this.failedImg.show();
+                this.failed.show();
+                this.failedRect.show();
             }
         }
 
@@ -274,19 +267,107 @@ public class VisualizationViewImage implements VisualizationView {
      * org.ow2.proactive_grid_cloud_portal.client.Listeners.VisualizationListener#imageUpdated(java.
      * lang.String, java.lang.String)
      */
-    public void imageUpdated(String jobId, String path) {
+    public void imageUpdated(String jobId) {
         JobsModel jobsModel = ((SchedulerModelImpl) controller.getModel()).getExecutionsModel().getJobsModel();
         if (!jobsModel.getSelectedJob().getId().toString().equals(jobId))
             return;
 
-        this.imgPath = path;
-        this.imgLoader = new Image("images/" + this.imgPath);
-        this.imgLoader.addLoadHandler(this);
-        this.message.setContents("Fetching image...");
+        LogModel.getInstance().logImportantMessage("in imageUpdated");
 
-        // wont load if not added to the document
-        imgLoader.setVisible(false);
-        RootPanel.get().add(imgLoader);
+        int w = 800;//TODO: 800 is hard coded
+        int h = 800;
+
+        final int fw = w;
+        final int fh = h;
+
+        if (this.overlay != null) {
+            this.overlay.clear();
+            this.root.removeChild(this.overPane);
+            this.overPane = null;
+            this.overlay = null;
+            this.root.removeChild(this.navIcon);
+        }
+
+        this.overlay = new Raphael(w, h);
+        this.overPane = new WidgetCanvas(this.overlay);
+        this.overPane.setLeft(0);
+        this.overPane.setTop(0);
+        this.overPane.setWidth(w);
+        this.overPane.setHeight(h);
+
+        if (this.map != null) {
+            LogModel.getInstance().logImportantMessage("this.map != null");
+            for (String name : map.getNames()) {
+                this.boxes.put(name, new Box(name));
+            }
+            this.map = null;
+        } else {
+            for (Box b : this.boxes.values()) {
+                b.draw();
+            }
+        }
+
+        this.message.setVisible(false);
+
+        this.root.addChild(this.overPane);
+        this.root.setWidth(w);
+        this.root.setHeight(h);
+
+        // very ugly, only way to control the scroll viewport
+        final Canvas scroll = SchedulerPage.inst.visuTab.getPane().getParentElement();
+
+        this.navIcon = new Canvas();
+        navIcon.setPosition("absolute");
+        navIcon.setBackgroundImage(SchedulerImages.instance.nav_22().getSafeUri().asString());
+        navIcon.setZIndex(Integer.MAX_VALUE - 1);
+        navIcon.setWidth(22);
+        navIcon.setHeight(22);
+        navIcon.setCursor(Cursor.HAND);
+        navIcon.setTooltip("Navigate the image display");
+        updateNavButtonPos(true);
+
+        // HACKED : keep the icon at a fixed position
+        scroll.addScrolledHandler(new ScrolledHandler() {
+            public void onScrolled(ScrolledEvent event) {
+                updateNavButtonPos(false);
+            }
+        });
+        scroll.addResizedHandler(new ResizedHandler() {
+            public void onResized(ResizedEvent event) {
+                updateNavButtonPos(false);
+            }
+        });
+
+        root.addChild(navIcon);
+
+        /*
+         * pops up a menu that contains a navigation view of the view
+         */
+        navIcon.addClickHandler(new ClickHandler() { //TODO: Replace with lamba
+
+            public void onClick(ClickEvent event) {
+                final int scrollw = scroll.getInnerContentWidth();
+                final int scrollh = scroll.getInnerContentHeight();
+                final int w = 300;
+                final int h = 200;
+
+                final double wmul = (double) fw / (double) w;
+                final double hmul = (double) fh / (double) h;
+
+                final Menu menu = new Menu();
+                menu.setWidth(w + 2);
+                menu.setHeight(h + 2);
+                menu.setBorder("1px solid black");
+                menu.setShowShadow(true);
+
+                menu.setLeft(navIcon.getAbsoluteLeft() - 4);
+                menu.setTop(navIcon.getAbsoluteTop() - h + 16);
+                menu.show();
+                //root.setContextMenu(menu);
+            }
+        });
+        //Done
+
     }
 
     /*
@@ -297,22 +378,22 @@ public class VisualizationViewImage implements VisualizationView {
      * lang.String, org.ow2.proactive_grid_cloud_portal.shared.JobVisuMap)
      */
     public void mapUpdated(String jobId, JobVisuMap map) {
+        LogModel.getInstance().logImportantMessage("in mapUpdated image");
         JobsModel jobsModel = ((SchedulerModelImpl) controller.getModel()).getExecutionsModel().getJobsModel();
         if (!jobsModel.getSelectedJob().getId().toString().equals(jobId))
             return;
 
         this.map = map;
+        LogModel.getInstance().logImportantMessage("in mapUpdated image2");
         if (this.overlay != null) {
             for (String name : map.getNames()) {
+                LogModel.getInstance().logImportantMessage("adding bb Box");//We don't go there because overlay is null
                 Box b = new Box(name);
                 this.boxes.put(name, b);
             }
             this.map = null;
-
-            if (this.img != null) {
-                List<Task> tasks = ((SchedulerModelImpl) controller.getModel()).getTasksModel().getTasks();
-                this.tasksUpdated(tasks, tasks.size());
-            }
+            List<Task> tasks = ((SchedulerModelImpl) controller.getModel()).getTasksModel().getTasks();
+            this.tasksUpdated(tasks, tasks.size());
         }
 
     }
@@ -324,6 +405,8 @@ public class VisualizationViewImage implements VisualizationView {
      * com.google.gwt.event.dom.client.LoadHandler#onLoad(com.google.gwt.event.dom.client.LoadEvent)
      */
     public void onLoad(LoadEvent event) {
+        LogModel.getInstance().logImportantMessage("in onload");
+
         // if the image is not visible, it will return a size of 0 in IE9
         imgLoader.setVisible(true);
 
@@ -339,13 +422,6 @@ public class VisualizationViewImage implements VisualizationView {
 
         final int fw = w;
         final int fh = h;
-
-        if (this.img != null) {
-            this.root.removeMember(this.img);
-            this.img = null;
-            this.root.setWidth100();
-            this.root.setHeight100();
-        }
         if (this.overlay != null) {
             this.overlay.clear();
             this.root.removeChild(this.overPane);
@@ -354,10 +430,8 @@ public class VisualizationViewImage implements VisualizationView {
             this.root.removeChild(this.navIcon);
         }
 
-        this.img = new Img(this.imgPath, w, h);
-        this.img.setImageType(ImageStyle.NORMAL);
-
         this.overlay = new Raphael(w, h);
+        LogModel.getInstance().logImportantMessage("new Raphael done");
         this.overPane = new WidgetCanvas(this.overlay);
         this.overPane.setLeft(0);
         this.overPane.setTop(0);
@@ -376,7 +450,6 @@ public class VisualizationViewImage implements VisualizationView {
         }
 
         this.message.setVisible(false);
-        this.root.addMember(this.img);
 
         this.root.addChild(this.overPane);
         this.root.setWidth(w);
@@ -429,14 +502,6 @@ public class VisualizationViewImage implements VisualizationView {
                 menu.setBorder("1px solid black");
                 menu.setShowShadow(true);
 
-                final Img img = new Img(imgPath, w, h);
-                img.setMaxWidth(w);
-                img.setMaxHeight(h);
-                img.setOverflow(Overflow.HIDDEN);
-                img.setZIndex(Integer.MAX_VALUE);// will stay on top of the default menu entry
-
-                menu.addChild(img);
-
                 final Canvas rect = new Canvas();
                 rect.setWidth((int) ((double) (w * ((double) scrollw / (double) fw))));
                 rect.setHeight((int) ((double) (h * ((double) scrollh / (double) fh))));
@@ -453,38 +518,6 @@ public class VisualizationViewImage implements VisualizationView {
                 }
 
                 rect.setCanDragReposition(true);
-                img.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        int ix = event.getX() - img.getAbsoluteLeft() - rect.getWidth() / 2;
-                        int iy = event.getY() - img.getAbsoluteTop() - rect.getHeight() / 2;
-
-                        ix = Math.max(0, ix);
-                        ix = Math.min(ix, w - rect.getWidth());
-                        iy = Math.max(0, iy);
-                        iy = Math.min(iy, h - rect.getHeight());
-
-                        rect.moveTo(ix, iy);
-                        scroll.scrollTo((int) (ix * wmul), (int) (iy * hmul));
-                        updateNavButtonPos(false);
-                    }
-                });
-                img.addMouseStillDownHandler(new MouseStillDownHandler() {
-                    public void onMouseStillDown(MouseStillDownEvent event) {
-                        int ix = event.getX() - img.getAbsoluteLeft() - rect.getWidth() / 2;
-                        int iy = event.getY() - img.getAbsoluteTop() - rect.getHeight() / 2;
-
-                        ix = Math.max(0, ix);
-                        ix = Math.min(ix, w - rect.getWidth());
-                        iy = Math.max(0, iy);
-                        iy = Math.min(iy, h - rect.getHeight());
-
-                        rect.moveTo(ix, iy);
-                        scroll.scrollTo((int) (ix * wmul), (int) (iy * hmul));
-                        updateNavButtonPos(false);
-                    }
-                });
-
-                img.addChild(rect);
 
                 menu.setLeft(navIcon.getAbsoluteLeft() - 4);
                 menu.setTop(navIcon.getAbsoluteTop() - h + 16);
@@ -492,8 +525,15 @@ public class VisualizationViewImage implements VisualizationView {
                 //root.setContextMenu(menu);
             }
         });
+        LogModel.getInstance().logImportantMessage("setting tasks");
 
         List<Task> tasks = ((SchedulerModelImpl) controller.getModel()).getTasksModel().getTasks();
+        int i = 0;
+        for (Task t : tasks) {
+            i++;
+            map.addTask(10 + i, 10 + i, 20, 20, t.getName());
+            LogModel.getInstance().logImportantMessage("in for task");
+        }
         this.tasksUpdated(tasks, tasks.size());
     }
 
@@ -518,14 +558,6 @@ public class VisualizationViewImage implements VisualizationView {
      * proactive_grid_cloud_portal.client.Job)
      */
     public void jobSelected(Job job) {
-        if (this.img != null) {
-            this.img.setVisible(false);
-            this.root.removeMember(img);
-            this.img = null;
-            this.map = null;
-            this.root.setWidth100();
-            this.root.setHeight100();
-        }
         if (this.overlay != null) {
             this.overlay.clear();
             this.root.removeChild(this.overPane);
@@ -534,6 +566,7 @@ public class VisualizationViewImage implements VisualizationView {
             this.overlay = null;
             this.root.removeChild(this.navIcon);
         }
+        LogModel.getInstance().logImportantMessage("setting loading");
         this.message.setContents("Loading...");
         this.message.setIcon("loading.gif"); // it is safe to ignore the "image 'undefined' couldn't be found" error
         this.message.setVisible(true);
@@ -545,13 +578,6 @@ public class VisualizationViewImage implements VisualizationView {
      * @see org.ow2.proactive_grid_cloud_portal.client.Listeners.JobSelectedListener#jobUnselected()
      */
     public void jobUnselected() {
-        if (this.img != null) {
-            this.root.removeMember(this.img);
-            this.img = null;
-            this.map = null;
-            this.root.setWidth100();
-            this.root.setHeight100();
-        }
         if (this.overlay != null) {
             this.overlay.clear();
             this.root.removeChild(this.overPane);
@@ -595,12 +621,14 @@ public class VisualizationViewImage implements VisualizationView {
      * util.List)
      */
     public void tasksUpdated(List<Task> tasks, long totalTasks) {
+        LogModel.getInstance().logImportantMessage("in tasksUpdated");
 
         if (this.boxes.isEmpty() || ((SchedulerModelImpl) controller.getModel()).getTasksModel().isTasksDirty()) {
             return;
         }
 
         HashMap<String, VisuTaskStatus> ft = new HashMap<String, VisuTaskStatus>();
+
         for (Task t : tasks) {
             String name = t.getName();
             int i1 = name.indexOf('#');
@@ -686,6 +714,7 @@ public class VisualizationViewImage implements VisualizationView {
     public void htmlUpdated(String jobId, String path) {
         jobUnselected();
         this.message.setVisible(false);
+        //TODO: de we need that??
     }
 
     public void setRoot(Layout layout) {
@@ -700,5 +729,6 @@ public class VisualizationViewImage implements VisualizationView {
 
     @Override
     public void selectedJobUpdated(Job job) {
+        jobSelected(job);
     }
 }

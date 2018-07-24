@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.ow2.proactive_grid_cloud_portal.common.client.model.LogModel;
+
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 
@@ -50,12 +52,17 @@ public class JobVisuMap implements IsSerializable {
         this.tasks = new HashMap<String, TaskPos>();
     }
 
-    public void addTask(int x, int y, int w, int h, String name) {
-        if (name == null || name.trim().length() == 0)
+    public void addTask(int x, int y, int w, int h, String name) { //TODO: This is never called, it should be
+        if (name == null || name.trim().length() == 0) {
+            LogModel.getInstance().logImportantMessage("addTask name null or empty");
             throw new IllegalArgumentException();
-
+        }
+        LogModel.getInstance().logImportantMessage("addTask name not null or empty");
+        LogModel.getInstance().logImportantMessage("addTask this.tasks size " + this.tasks.size());
         TaskPos t = new TaskPos(x, y, w, h);
+        LogModel.getInstance().logImportantMessage("addTask TaskPos set");
         this.tasks.put(name, t);
+        LogModel.getInstance().logImportantMessage("addTask put done");
     }
 
     public boolean hasTask(String name) {

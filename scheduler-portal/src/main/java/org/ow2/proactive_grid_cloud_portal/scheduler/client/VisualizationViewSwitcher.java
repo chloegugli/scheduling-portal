@@ -27,6 +27,7 @@ package org.ow2.proactive_grid_cloud_portal.scheduler.client;
 
 import java.util.List;
 
+import org.ow2.proactive_grid_cloud_portal.common.client.model.LogModel;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.JobSelectedListener;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.TasksUpdatedListener;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.VisualizationListener;
@@ -58,6 +59,7 @@ public class VisualizationViewSwitcher
     private Layout layout;
 
     public VisualizationViewSwitcher(SchedulerController controller) {
+        LogModel.getInstance().logImportantMessage("VisualizationViewSwitcher constructor");
         controller.getEventDispatcher().addVisualizationListener(this);
         JobsModel jobsModel = ((SchedulerModelImpl) controller.getModel()).getExecutionsModel().getJobsModel();
         jobsModel.addJobSelectedListener(this);
@@ -81,6 +83,7 @@ public class VisualizationViewSwitcher
 
     @Override
     public void onLoad(LoadEvent event) {
+        LogModel.getInstance().logImportantMessage("calling onload");//TODO : we never get here
         this.activeVisualization.onLoad(event);
     }
 
@@ -110,13 +113,13 @@ public class VisualizationViewSwitcher
     }
 
     @Override
-    public void imageUpdated(String jobId, String path) {
+    public void imageUpdated(String jobId) {
         layout.hideMember(layout.getMembers()[0]);
         layout.showMember(layout.getMembers()[1]);
         this.activeVisualization = this.imageView;
-
-        this.imageView.imageUpdated(jobId, path);
-        this.htmlView.imageUpdated(jobId, path);
+        LogModel.getInstance().logImportantMessage("in imageUpdated 2");
+        this.imageView.imageUpdated(jobId);
+        this.htmlView.imageUpdated(jobId);
     }
 
     @Override

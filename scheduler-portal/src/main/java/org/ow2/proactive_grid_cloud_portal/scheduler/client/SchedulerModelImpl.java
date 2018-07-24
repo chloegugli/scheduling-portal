@@ -34,6 +34,7 @@ import java.util.Set;
 
 import org.ow2.proactive_grid_cloud_portal.common.client.Listeners.StatsListener;
 import org.ow2.proactive_grid_cloud_portal.common.client.Model.StatHistory.Range;
+import org.ow2.proactive_grid_cloud_portal.common.client.model.LogModel;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.SchedulerStatusListener;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.StatisticsListener;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.SchedulerListeners.UsersListener;
@@ -68,7 +69,7 @@ public class SchedulerModelImpl extends SchedulerModel implements SchedulerEvent
 
     private HashMap<String, String> accountStats = null;
 
-    private Map<String, String> imagePath = null;
+    private Map<String, String> imagePath = null;//TODO : remove, seems to be always empty. setJobImagePath never called
 
     private Map<String, JobVisuMap> visuMap = null;
 
@@ -142,14 +143,14 @@ public class SchedulerModelImpl extends SchedulerModel implements SchedulerEvent
 
     @Override
     public String getJobImagePath(String jobId) {
+        LogModel.getInstance().logImportantMessage("in getJobImagePath");
         return this.imagePath.get(jobId);
     }
 
-    void setJobImagePath(String jobId, String path) {
-        this.imagePath.put(jobId, path);
-
+    void setJobImagePath(String jobId) {
+        LogModel.getInstance().logImportantMessage("in setJobImagePath");
         for (VisualizationListener list : this.visuListeners) {
-            list.imageUpdated(jobId, path);
+            list.imageUpdated(jobId);
         }
     }
 

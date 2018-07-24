@@ -47,6 +47,7 @@ import org.ow2.proactive_grid_cloud_portal.scheduler.client.controller.ResultCon
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.controller.ServerLogsController;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.controller.TasksController;
 import org.ow2.proactive_grid_cloud_portal.scheduler.client.model.ExecutionsModel;
+import org.ow2.proactive_grid_cloud_portal.scheduler.shared.JobVisuMap;
 import org.ow2.proactive_grid_cloud_portal.scheduler.shared.SchedulerConfig;
 import org.ow2.proactive_grid_cloud_portal.scheduler.shared.SchedulerPortalDisplayConfig;
 
@@ -366,7 +367,6 @@ public class SchedulerController extends Controller implements UncaughtException
     }
 
     public void visuFetch(final String jobId) {
-
         // fetch visu info
         if (jobId != null && this.visuFetchEnabled) {
             String curHtml = model.getJobHtml(jobId);
@@ -377,48 +377,30 @@ public class SchedulerController extends Controller implements UncaughtException
                 final long t = System.currentTimeMillis();
                 this.scheduler.getJobHtml(LoginModel.getInstance().getSessionId(), jobId, new AsyncCallback<String>() {
                     public void onSuccess(String result) {
+                        //Si on a un SVG
                         model.setJobHtml(jobId, result);
                         LogModel.getInstance().logMessage("Fetched html for job " + jobId + " in " +
                                                           (System.currentTimeMillis() - t) + " ms");
                     }
 
                     public void onFailure(Throwable caught) {
-                        String msg = "Failed to fetch html for job " + jobId;
+                        String msg = "Failed to fetch html for +- job :" + jobId;
                         String json = JSONUtils.getJsonErrorMessage(caught);
                         if (json != null)
                             msg += " : " + json;
 
                         LogModel.getInstance().logImportantMessage(msg);
-
-                        // trying to load image
-                        String curPath = model.getJobImagePath(jobId);
-                        if (curPath != null) {
-                            // exists already, resetting it will trigger listeners
-                            model.setJobImagePath(jobId, curPath);
-                        } else {
-                            final long t = System.currentTimeMillis();
-                            scheduler.getJobImage(LoginModel.getInstance().getSessionId(),
-                                                  jobId,
-                                                  new AsyncCallback<String>() {
-                                                      public void onSuccess(String result) {
-                                                          model.setJobImagePath(jobId, result);
-                                                          LogModel.getInstance()
-                                                                  .logMessage("Fetched image for job " + jobId +
-                                                                              " in " +
-                                                                              (System.currentTimeMillis() - t) + " ms");
-                                                      }
-
-                                                      public void onFailure(Throwable caught) {
-                                                          String msg = "Failed to fetch image for job " + jobId;
-                                                          String json = JSONUtils.getJsonErrorMessage(caught);
-                                                          if (json != null)
-                                                              msg += " : " + json;
-
-                                                          LogModel.getInstance().logImportantMessage(msg);
-                                                          model.visuUnavailable(jobId);
-                                                      }
-                                                  });
+                        JobVisuMap visuMap = new JobVisuMap();
+                        List<Task> tasks = model.getTasksModel().getTasks();
+                        int i = 0;
+                        for (Task t : tasks) {
+                            i = i + 60;
+                            visuMap.addTask(50 + i, 50 + i, 150, 50, t.getName());
+                            LogModel.getInstance().logImportantMessage("going through tasks 1 - " + t.getName());
                         }
+                        LogModel.getInstance().logImportantMessage("calling setJobImagePath");
+                        model.setJobImagePath(jobId);
+                        model.setJobVisuMap(jobId, visuMap);
                     }
                 });
             }
@@ -791,6 +773,7 @@ public class SchedulerController extends Controller implements UncaughtException
 
     public void onUncaughtException(Throwable e) {
         e.printStackTrace();
+        error(e.getMessage());
     }
 
     public void getUsage(String user, Date startDate, Date endDate) {
